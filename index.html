@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>弑君者 · Regicide</title>
+
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/card.css" />
+    <link rel="stylesheet" href="css/panels.css" />
+    <link rel="stylesheet" href="css/anim.css" />
+  </head>
+
+  <body>
+    <div class="app">
+      <!-- 顶栏：左边标题，右边只在桌面端显示按键说明 -->
+      <header class="topbar">
+        <div class="brand">
+          <strong>弑君者</strong>
+          <span>单人模式</span>
+          <span id="art-note" class="art-note" hidden></span>
+        </div>
+        <div id="shortcuts" class="shortcuts">
+          1–8 选牌 · 点敌人出牌/弃牌 · Esc 取消选择 · J 小丑 · 空格跳过动画
+        </div>
+      </header>
+
+      <main class="board">
+        <!--
+          战场一行三栏：左（牌堆/文字）· Boss · 右（牌堆/小丑）
+          桌面：两翼各两个牌堆，扇形排开
+          手机：只保留小丑的卡面（它是按钮），其余三个牌堆变成 Boss 左侧的文字
+        -->
+        <section class="table-row">
+          <div class="side side-left">
+            <div class="resource-text">
+              <span class="res">城堡 <b id="res-castle">—</b></span>
+              <span class="res">酒馆 <b id="res-tavern">—</b></span>
+              <span class="res">弃牌 <b id="res-discard">—</b></span>
+            </div>
+
+            <div class="wing">
+              <div class="pile" data-pile="castle">
+                <div class="pile-bg"></div>
+                <div class="pile-slot"></div>
+                <div class="pile-remain"></div>
+                <div class="pile-name">城堡</div>
+              </div>
+
+              <div class="pile" data-pile="tavern">
+                <div class="pile-bg"></div>
+                <div class="pile-slot"></div>
+                <div class="pile-remain"></div>
+                <div class="pile-name">酒馆</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 点 Boss = 出牌 / 弃牌（先选好手牌） -->
+          <div id="enemy" class="enemy" title="点我 = 出牌 / 弃牌">
+            <div class="badge badge-attack">
+              <img class="badge-icon" alt="攻击力" />
+              <span class="badge-digits"></span>
+            </div>
+            <div class="badge badge-health">
+              <img class="badge-icon" alt="生命值" />
+              <span class="badge-digits"></span>
+            </div>
+            <div class="enemy-slot"></div>
+            <div class="enemy-hpbar"><span></span></div>
+          </div>
+
+          <div class="side side-right">
+            <div class="wing">
+              <div class="pile" data-pile="discard">
+                <div class="pile-bg"></div>
+                <div class="pile-slot"></div>
+                <div class="pile-remain"></div>
+                <div class="pile-name">弃牌</div>
+              </div>
+
+              <div class="pile" data-pile="joker" title="点击使用小丑能力：弃掉整手牌并补满 8 张">
+                <div class="pile-bg"></div>
+                <div class="pile-slot"></div>
+                <div class="pile-remain"></div>
+                <div class="pile-name">小丑</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 状态：水平居中 -->
+        <div class="statusline">
+          <span id="phase" class="status-phase"></span>
+          <span id="hint" class="status-hint"></span>
+          <span id="selection" class="status-selection"></span>
+        </div>
+
+        <!-- 手牌区（选中后再点一下 = 取消选中；Esc 也可以） -->
+        <section class="hand-area">
+          <div id="hand" class="hand"></div>
+        </section>
+      </main>
+    </div>
+
+    <!-- 动画层：飞牌与飘字，不参与布局 -->
+    <div id="anim-layer" class="anim-layer" aria-hidden="true"></div>
+
+    <div id="result" class="result" hidden>
+      <div class="result-card">
+        <div id="result-text" class="result-text"></div>
+        <div id="result-tier" class="result-tier"></div>
+        <button id="btn-restart" class="btn btn-primary" type="button">再来一局</button>
+      </div>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

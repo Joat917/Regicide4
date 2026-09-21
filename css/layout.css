@@ -1,0 +1,386 @@
+/* 棋盘布局：顶栏 / 战场（左·Boss·右）/ 中央状态 / 手牌
+ *
+ * 桌面：两翼各两个牌堆（扇形），Boss 居中，手牌一行重叠。
+ * 手机：牌堆卡面只留小丑（它是按钮），其余信息变成 Boss 两侧的文字；
+ *      手牌不重叠（竖屏两行、横屏一行），尺寸由 vh 驱动。
+ */
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 15px;
+  perspective: 800px;
+  perspective-origin: 50% 40%;
+}
+
+.app {
+  max-width: 1180px;
+  margin: 0 auto;
+  min-height: 100vh; /* 老浏览器兜底 */
+  min-height: 100dvh;
+  padding: var(--gap);
+  padding-left: max(var(--gap), env(safe-area-inset-left));
+  padding-right: max(var(--gap), env(safe-area-inset-right));
+  padding-bottom: max(var(--gap), env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) * 1.2);
+}
+
+/* ---------- 顶栏：左边标题，右边按键说明（只在桌面端显示） ---------- */
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.brand strong {
+  font-size: 15px;
+  letter-spacing: 0.1em;
+}
+
+.brand span {
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+/* 使用内置简易牌面时的提示（鼠标悬停有说明） */
+.art-note {
+  font-size: 11px;
+  color: var(--accent);
+  opacity: 0.85;
+  cursor: help;
+}
+
+.shortcuts {
+  font-size: 11px;
+  color: var(--ink-soft);
+  opacity: 0.75;
+}
+
+/* ---------- 棋盘 ---------- */
+
+.board {
+  display: grid;
+  /* 三行都按内容高度排，不做拉伸：
+     之前用 1fr + 手牌底对齐来"填满屏幕"，结果桌面高窗口下
+     余量全挤在"状态行"和"手牌"之间，看着像一段莫名其妙的大空隙。
+     手机上的纵向填充改由手牌高度公式自己完成（theme.css 里按剩余空间算）。 */
+  grid-template-rows: auto auto auto;
+  gap: calc(var(--gap) * 1.1);
+}
+
+/* ---------- 战场：左 · Boss · 右 ---------- */
+
+.table-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: calc(var(--gap) * 1.4);
+  /* 上边给 Boss 徽章留位，下边给扇形旋转与牌堆名字留位 */
+  padding: calc(var(--boss-h) * 0.14 + 8px) 0 calc(var(--boss-h) * 0.26);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.side-left {
+  align-items: flex-end;
+}
+
+.side-right {
+  align-items: flex-start;
+}
+
+.wing {
+  display: flex;
+  align-items: flex-end;
+}
+
+/* 牌堆卡面（桌面）：绕着下方一个圆心轻微旋转，像一对翅膀 */
+.wing .pile {
+  --tilt: 0deg;
+  --dy: 0px;
+  transform: rotate(var(--tilt)) translateY(var(--dy));
+  transform-origin: 50% 145%;
+}
+
+.side-left .wing .pile:nth-child(1) {
+  --tilt: -14deg;
+  --dy: -3px;
+}
+
+.side-left .wing .pile:nth-child(2) {
+  --tilt: -6deg;
+}
+
+.side-right .wing .pile:nth-child(1) {
+  --tilt: 6deg;
+}
+
+.side-right .wing .pile:nth-child(2) {
+  --tilt: 14deg;
+  --dy: -3px;
+}
+
+/* 牌堆名字跟着歪会很难看：反向旋转回水平 */
+.wing .pile-name {
+  transform: rotate(calc(-1 * var(--tilt)));
+  transform-origin: 50% 0;
+}
+
+/* 文字形态的牌堆信息（手机上才显示） */
+.resource-text {
+  display: none;
+}
+
+.resource-text .res {
+  white-space: nowrap;
+}
+
+.resource-text b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 牌堆 ---------- */
+
+.pile {
+  position: relative;
+  width: var(--card-w);
+  height: var(--card-h);
+  --digit-h: calc(var(--card-h) * 0.108);
+  --radius-here: var(--card-radius);
+  transition: transform var(--t-fast) ease, opacity var(--t-fast) ease;
+}
+
+/* 小丑：桌面上是扇形里的一张，手机上缩小到 Boss 旁边（仍是按钮） */
+.pile[data-pile='joker'] {
+  width: var(--joker-w);
+  height: var(--joker-h);
+  --digit-h: calc(var(--joker-h) * 0.108);
+  --radius-here: var(--joker-radius);
+}
+
+.pile-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-here);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  opacity: 0.3;
+  transition: opacity var(--t-fast) ease;
+}
+
+.pile-slot {
+  position: absolute;
+  inset: 0;
+}
+
+.pile-remain {
+  position: absolute;
+  top: 6%;
+  right: 6%;
+  z-index: var(--z-badge);
+  width: max-content;
+  display: flex;
+  align-items: center;
+  padding: 1px 3px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.pile-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -22%;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* 小丑牌堆 = 小丑能力的按钮（只改位移，保留扇形旋转） */
+.pile[data-pile='joker'].is-available {
+  cursor: pointer;
+}
+
+.pile[data-pile='joker'].is-available:hover {
+  --dy: -9px;
+}
+
+.pile[data-pile='joker'].is-available:hover .pile-bg {
+  opacity: 0.55;
+}
+
+.pile[data-pile='joker']:not(.is-available) {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------- Boss ---------- */
+
+.enemy {
+  position: relative;
+  width: var(--boss-w);
+  height: var(--boss-h);
+  transition: transform var(--t-fast) ease;
+}
+
+/* 选中了合法的牌组时，Boss 变成可点的"确认键" */
+.enemy.is-ready {
+  cursor: pointer;
+}
+
+.enemy.is-ready:hover {
+  transform: translateY(-3px);
+}
+
+.enemy.is-ready .enemy-slot::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 2px solid var(--accent);
+  border-radius: calc(var(--boss-radius) + 5px);
+  opacity: 0;
+  transition: opacity var(--t-fast) ease;
+}
+
+.enemy.is-ready:hover .enemy-slot::after {
+  opacity: 1;
+}
+
+.enemy-slot {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---------- 中央状态：水平居中，只放阶段 / 要求 / 已选 ---------- */
+
+.statusline {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 2px 14px;
+  min-height: 1.7em;
+  text-align: center;
+  font-size: 14px;
+}
+
+.status-phase {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.status-phase.is-warn {
+  color: var(--accent);
+}
+
+.status-hint {
+  color: var(--ink-soft);
+}
+
+.status-hint.is-warn {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.status-selection {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 手牌区 ---------- */
+
+.hand-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hand {
+  max-width: 100%;
+  /* 顶部留白要 ≥ 选中态的上浮高度（0.16 张牌高），否则会被 overflow 裁掉 */
+  padding-top: calc(var(--hand-h) * 0.2);
+  padding-bottom: 2px;
+}
+
+/* ---------- 手机共用（竖屏窄屏 / 横屏矮屏）---------- */
+
+@media (max-width: 720px), (orientation: landscape) and (max-height: 520px) {
+  .table-row {
+    gap: var(--gap);
+    padding: calc(var(--badge-h) + 14px) 0 10px;
+  }
+
+  /* 牌堆卡面只留小丑，其余交给文字 */
+  .wing {
+    display: contents;
+  }
+
+  .wing .pile:not([data-pile='joker']) {
+    display: none;
+  }
+
+  .side .pile {
+    --tilt: 0deg;
+    --dy: 0px;
+  }
+
+  .resource-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--ink-soft);
+  }
+
+  .side-left .resource-text {
+    text-align: right;
+  }
+
+  .side-right .resource-text {
+    text-align: left;
+  }
+
+  /*
+   * 手牌：竖屏放得下两行，就分两行把空间用满，但**仍然重叠**
+   * （步进 0.45 张牌宽 → 一行 4 张、手指点得中）。
+   * 用 .hand.card-row 提高优先级：card.css 里 .card-row 的默认值源码位置更靠后。
+   */
+  .hand.card-row {
+    --row-step: calc(var(--hand-w) * 0.45);
+    flex-wrap: wrap;
+    row-gap: calc(var(--gap) * 0.9);
+    justify-content: center;
+  }
+
+  .shortcuts {
+    display: none;
+  }
+}
+
+/* 横屏高度太紧，手牌压回一行 */
+@media (orientation: landscape) and (max-height: 520px) {
+  .hand.card-row {
+    flex-wrap: nowrap;
+  }
+}

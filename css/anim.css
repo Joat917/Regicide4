@@ -1,0 +1,61 @@
+/*
+ * 动画层：所有"飞出去的牌"与飘字都放在这里
+ *
+ * 它是一个 position: fixed 的覆盖层，不参与布局、不接收点击；
+ * 幽灵卡按 getBoundingClientRect 的视口坐标绝对定位，
+ * 动画结束就被移除，不会堆积、也不会影响真实布局。
+ */
+
+.anim-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-flying);
+  pointer-events: none;
+}
+
+.ghost-wrap {
+  position: absolute;
+  margin: 0;
+  pointer-events: none;
+  will-change: translate, opacity;
+}
+
+.card-ghost {
+  position: absolute;
+  margin: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.impact {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 3px solid rgba(170, 57, 51, 0.75);
+  box-shadow: inset 0 0 24px rgba(170, 57, 51, 0.35);
+  pointer-events: none;
+  will-change: scale, opacity;
+}
+
+.float-text {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--accent);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+  will-change: translate, opacity;
+}
+
+.float-text.is-good {
+  color: #4b7f2f;
+}
+
+.float-text.is-accent {
+  color: #8a4b12;
+}
+
+.float-text.is-warn {
+  color: var(--accent);
+}

@@ -1,0 +1,113 @@
+/*
+ * 设计变量
+ *
+ * 卡片比例取自 regicideHQ/css/cardStyle.css 的 146.4 × 204.8（≈ 1 : 1.3989），
+ * 但改成用 clamp() 做响应式，不再像原版那样固定像素 + min-width:1028px。
+ * 手牌步进 35/146.4 ≈ 0.239 倍牌宽，同样来自原版（8 张牌正好铺满 391.4px）。
+ */
+
+:root {
+  color-scheme: light;
+
+  /* 尺寸
+     card-w 是桌面"所有卡同尺寸"时的基准；手机上会拆成三套：
+     Boss / 手牌 / 小丑，各自按不同维度驱动（见下方媒体查询） */
+  --card-w: clamp(56px, min(9.2vw, 12.2vh), 140px);
+  --card-h: calc(var(--card-w) * 1.3989);
+  --boss-w: var(--card-w);
+  --boss-h: var(--card-h);
+  --hand-w: var(--card-w);
+  --hand-h: var(--card-h);
+  --joker-w: var(--card-w);
+  --joker-h: var(--card-h);
+  --hand-step: calc(var(--hand-w) * 0.239);
+  /* 圆角：跟着各自的实际尺寸走，否则手机上大 Boss 会变成直角、小手牌会圆得夸张 */
+  --card-radius: calc(var(--card-w) * 0.055);
+  --boss-radius: calc(var(--boss-w) * 0.055);
+  --hand-radius: calc(var(--hand-w) * 0.055);
+  --joker-radius: calc(var(--joker-w) * 0.055);
+  /* 徽章里的图标与数字：桌面按比例，手机上封顶，免得 Boss 一大就变成两个巨型数字 */
+  --badge-h: min(calc(var(--boss-h) * 0.105), 24px);
+  --gap: clamp(6px, 1vw, 14px);
+  --radius: 10px;
+
+  /* 颜色 */
+  --ink: #1a0903;
+  --ink-soft: #6f6058;
+  --paper: #ecebe7;
+  --paper-2: #ffffff;
+  --line: rgba(26, 9, 3, 0.14);
+  --accent: #aa3933;
+  --accent-soft: rgba(170, 57, 51, 0.12);
+  --gold: #c8a349;
+
+  /* 阴影 */
+  --shadow-card: 0 4px 8px rgba(0, 0, 0, 0.18), 0 6px 20px rgba(0, 0, 0, 0.12);
+
+  /* 层级：统一在这里分档，JS 只用变量，不写死数字
+     注意 --z-flying 必须高于手牌与徽章，否则飞行中的牌会钻到它们后面 */
+  --z-pile: 10;
+  --z-flying: 70;
+  --z-hand: 40;
+  --z-badge: 50;
+  --z-dialog: 90;
+
+  /* 时长 */
+  --t-fast: 150ms;
+  --t-base: 300ms;
+  --t-slow: 600ms;
+
+  --font: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, -apple-system, sans-serif;
+}
+
+/*
+ * 动画关闭时才把过渡压到 1ms。
+ *
+ * 注意：这里**故意不用** @media (prefers-reduced-motion)。
+ * 本游戏的动画承担了信息表达（这张牌从哪来、往哪去），
+ * 系统开了"减少动态效果"就静默关掉全部动画，表现就是"所有牌都在瞬移"，
+ * 而且很难查。所以改成一个显式开关：URL 加 ?motion=off 关闭，
+ * ?motion=auto 才遵循系统设置（由 main.js 给 <html> 加 .reduce-motion 类）。
+ */
+:root.reduce-motion {
+  --t-fast: 1ms;
+  --t-base: 1ms;
+  --t-slow: 1ms;
+}
+
+/* ---------- 竖屏手机（≤720px 宽）----------
+ * 宽度不够：Boss 收小、留出两侧放文字；手牌**仍在一行里重叠**，
+ * 只是把重叠率从桌面的 76% 降到 55%（手指点得中、又能一屏放下 8 张）。
+ */
+@media (max-width: 720px) {
+  :root {
+    --boss-w: min(42vw, 24vh);
+    --boss-h: calc(var(--boss-w) * 1.3989);
+    /*
+     * 手牌：竖屏放得下两行，那就"两行 + 仍然重叠"，把纵向空间用满。
+     * 高度按剩余空间算（360px ≈ 顶栏 + 战场 + 状态行 + 各段间距）；
+     * 2.35 ≈ 两行 + 顶部留白 + 行间距。宽度上限 40vw 保证一行仍能放 4 张。
+     */
+    --hand-h: min(calc((100vh - 360px) / 2.35), calc(40vw * 1.3989));
+    --hand-h: min(calc((100dvh - 360px) / 2.35), calc(40vw * 1.3989));
+    --hand-w: calc(var(--hand-h) / 1.3989);
+    --joker-w: calc(var(--boss-w) * 0.4);
+    --joker-h: calc(var(--joker-w) * 1.3989);
+    --gap: 6px;
+  }
+}
+
+/* ---------- 横屏手机（高度 ≤520px）----------
+ * 横向富余、纵向极紧：尺寸全由 vh 驱动，系数调到"正好填满高度、不留空档"。
+ */
+@media (orientation: landscape) and (max-height: 520px) {
+  :root {
+    --boss-w: min(22vh, 22vw);
+    --boss-h: calc(var(--boss-w) * 1.3989);
+    --hand-w: min(23vh, 14vw);
+    --hand-h: calc(var(--hand-w) * 1.3989);
+    --joker-w: calc(var(--boss-w) * 0.5);
+    --joker-h: calc(var(--joker-w) * 1.3989);
+    --gap: 6px;
+  }
+}

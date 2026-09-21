@@ -1,0 +1,128 @@
+/*
+ * 卡片本体与"卡槽"
+ *
+ * 分工：
+ *   .card-slot  一行里的一个位置。**位移、缩放、层级都加在它身上**，
+ *               所以动画可以放心用 transform（兼容性最好），
+ *               不会碰到卡片自己的翻面。
+ *   .card       只管翻面：transform 里的 rotateY(var(--flip)) 由 .is-faceup 控制。
+ *
+ * 朝向沿用原版 3D 约定：
+ *   .card-back  translateZ(1px)  → 默认朝观众
+ *   .card-front rotateY(180deg)
+ *   父级 .is-faceup（rotateY(180deg)）后显示正面
+ */
+
+.card {
+  position: relative;
+  width: var(--card-w);
+  height: var(--card-h);
+  /* 圆角由所在容器决定：手牌槽 / Boss 槽 / 牌堆各自设 --radius-here，
+     卡片本身不设这个变量，于是直接继承容器的值 */
+  border-radius: var(--radius-here, var(--card-radius));
+  box-shadow: var(--shadow-card);
+  transform-style: preserve-3d;
+  transform: translateY(var(--lift, 0px)) rotateY(var(--flip, 0deg));
+  transition: transform var(--t-base) cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow var(--t-fast);
+  z-index: var(--z, auto);
+}
+
+.card.is-faceup {
+  --flip: 180deg;
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-here, var(--card-radius));
+  overflow: hidden;
+  backface-visibility: hidden;
+  background: var(--paper-2);
+}
+
+.card-face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.card-back {
+  transform: translateZ(1px);
+}
+
+.card-front {
+  transform: rotateY(180deg);
+}
+
+/* ---------- 卡牌行（手牌 / 桌面牌） ---------- */
+
+.card-row {
+  --row-step: var(--hand-step);
+  display: flex;
+  align-items: flex-start;
+  min-height: var(--hand-h);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+  /* 补偿最后一张牌的负右 margin，否则居中的整行会偏右半张牌 */
+  padding-right: calc(var(--hand-w) - var(--row-step, var(--hand-step)));
+  scrollbar-width: thin;
+}
+
+.card-slot {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--hand-w);
+  height: var(--hand-h);
+  /*
+   * 重叠用**负的右 margin** 实现（而不是左 margin）：
+   * 这样一旦换行，每行第一张都自然贴左，不会被往前拉半张牌。
+   * 步进 = --row-step：桌面 0.239 张牌宽；手机上由 layout.css 改成 0.45。
+   */
+  margin-right: calc(var(--row-step, var(--hand-step)) - var(--hand-w));
+  z-index: calc(var(--z-layer, 10) + var(--i, 0) * 2);
+  cursor: pointer;
+}
+
+/* 三种"槽"里的牌都要填满槽本身（尺寸可能完全不同） */
+.card-slot .card,
+.enemy-slot .card,
+.pile-slot .card {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* 圆角跟着各自的尺寸：设在"槽"上，由卡片继承 */
+.card-slot {
+  --radius-here: var(--hand-radius);
+}
+
+.enemy-slot {
+  --radius-here: var(--boss-radius);
+}
+
+/* 悬停微抬（只在手牌区） */
+.hand .card-slot:hover .card:not(.is-selected) {
+  --lift: calc(var(--hand-h) * -0.05);
+}
+
+/*
+ * 选中态：**不改变层级**，只上浮 + 描边。
+ * 手牌横向重叠，谁在上谁就吃掉对方那块面积；要求是
+ * "选中牌不许遮住它右边任何一张"，所以它留在自然层级里，
+ * 右边那些牌照旧压在它上面——它自己不完整可见，这是刻意的取舍。
+ */
+.card-slot .card.is-selected {
+  --lift: calc(var(--hand-h) * -0.16);
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  box-shadow: 0 3px 8px rgba(170, 57, 51, 0.22);
+}
+
+/* 手牌行 */
+
+.hand {
+  --z-layer: var(--z-hand);
+}

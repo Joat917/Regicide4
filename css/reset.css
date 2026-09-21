@@ -1,0 +1,41 @@
+/* 最小重置 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  /* 移动端点击可点元素时浏览器会画一个蓝色高亮框，卡牌上很难看 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+}
+
+img {
+  max-width: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+button {
+  font: inherit;
+}
+
+/* 触屏：可点元素只响应"点"，别让双击缩放/长按选择来捣乱 */
+.card-slot,
+.pile,
+.enemy,
+button {
+  touch-action: manipulation;
+}
+
+/* hidden 属性优先级高于任何 display 规则（结算面板靠它开关） */
+[hidden] {
+  display: none !important;
+}

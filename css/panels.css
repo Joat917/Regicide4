@@ -1,0 +1,192 @@
+/* 敌人徽章与数字图标、按钮、结算面板 */
+
+/* ---------- 数字（icons/num-N.png 与 icons/rnum-N.png 拼的两位数） ---------- */
+
+.digits {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px; /* 两位数字之间留一条缝，否则 1 之类的细笔画会糊成一坨 */
+  line-height: 0;
+}
+
+.digits img {
+  display: block;
+  flex: 0 0 auto; /* 绝不被 flex 压缩 */
+  height: var(--digit-h, calc(var(--card-h) * 0.11));
+  width: auto;
+}
+
+.pile-remain .digits img {
+  height: var(--digit-h);
+}
+
+/* ---------- Boss 徽章：贴在卡片上方，与背景融为一体 ---------- */
+
+/*
+ * 要求：无边框、无底色、无阴影；单击无反应。
+ * 位置：攻击在卡片左上、生命在右上，中间隔开一大段，不再"紧贴在一起"。
+ * pointer-events: none 让点击直接穿透到背景（不会触发 Boss 的"确认"）。
+ */
+.badge {
+  position: absolute;
+  bottom: calc(100% + 7px);
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: var(--z-badge);
+}
+
+.badge-attack {
+  left: 0;
+}
+
+.badge-health {
+  right: 0;
+}
+
+.badge > * {
+  flex: 0 0 auto;
+}
+
+.badge-icon {
+  flex: 0 0 auto;
+  height: var(--badge-h);
+  width: auto;
+  opacity: 0.75;
+}
+
+.badge .digits img {
+  height: var(--badge-h);
+  opacity: 0.9;
+}
+
+/* 攻击力被黑桃削减时，这个数字压暗，表示"已经削过了" */
+.badge.is-reduced .badge-icon,
+.badge.is-reduced .digits img {
+  opacity: 0.42;
+}
+
+/* 触屏没有 hover：小丑可用时给一个常驻提示，而不是只在悬停时才出现 */
+@media (hover: none) {
+  .pile[data-pile='joker'].is-available .pile-bg {
+    opacity: 0.45;
+  }
+
+  .enemy.is-ready .enemy-slot::after {
+    opacity: 0.7;
+  }
+}
+
+.enemy-hpbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3%;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(26, 9, 3, 0.14);
+  overflow: hidden;
+}
+
+.enemy-hpbar span {
+  display: block;
+  height: 100%;
+  width: var(--hp, 100%);
+  background: linear-gradient(90deg, #7ba05b, var(--gold));
+  transition: width var(--t-base) ease;
+}
+
+.enemy-blocked {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* 卡片正下方。原来写的是 calc(var(--card-h) + 14px)，
+     手机上手牌尺寸和 Boss 尺寸不同，这个值会落进卡片里面 */
+  top: calc(100% + 10px);
+  font-size: 11px;
+  color: var(--accent);
+  text-align: center;
+}
+
+/* ---------- 按钮 ---------- */
+
+.btn {
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform var(--t-fast) ease, box-shadow var(--t-fast) ease, opacity var(--t-fast) ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-ghost {
+  background: transparent;
+}
+
+/* ---------- 结算面板 ---------- */
+
+.result {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: grid;
+  place-items: center;
+  background: rgba(26, 9, 3, 0.45);
+  padding: var(--gap);
+}
+
+.result-card {
+  width: min(420px, 100%);
+  padding: 26px 28px;
+  background: var(--paper-2);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.32);
+  text-align: center;
+}
+
+.result.is-win .result-card {
+  border-top: 6px solid var(--gold);
+}
+
+.result.is-lose .result-card {
+  border-top: 6px solid var(--accent);
+}
+
+.result-text {
+  font-size: 17px;
+  margin-bottom: 6px;
+}
+
+.result-tier {
+  min-height: 1.4em;
+  margin-bottom: 16px;
+  color: var(--accent);
+  font-size: 13px;
+}
