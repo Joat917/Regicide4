@@ -72,7 +72,7 @@ export const catalog = {
   manifest: null,
   /** 'file' = 用 assets/ 里的图片；'plain' = 用内置简易牌面（零资源） */
   mode: 'file',
-  /** 读取 manifest 失败时的原因（切到 plain 模式后仍保留，供界面提示） */
+  /** 读取 manifest 失败时的原因（切到 plain 模式后仍保留，供 Console 排查） */
   loadError: null,
 
   /**
@@ -81,7 +81,7 @@ export const catalog = {
    * @param {string} base
    * @param {{plainFallback?: boolean}} [options]
    *   plainFallback=true（默认）：读不到就自动切到内置简易牌面，**不抛错**，
-   *   这样没有美术资源的人克隆下来也能直接玩（界面会提示"简易牌面"）。
+   *   这样没有美术资源的人克隆下来也能直接玩（界面上不提示，来源只写 Console）。
    *   plainFallback=false：抛错（`?art=file` 时用它，方便排查资源问题）。
    */
   async load(base = 'assets/', { plainFallback = true } = {}) {

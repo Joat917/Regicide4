@@ -47,8 +47,6 @@ export function createBoard(root = document) {
       selection: $('#selection'),
     },
     shortcuts: $('#shortcuts'),
-    /** 顶栏里"简易牌面"提示 */
-    artNote: $('#art-note'),
     buttons: {
       restart: $('#btn-restart'),
     },

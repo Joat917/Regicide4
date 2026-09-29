@@ -54,14 +54,6 @@ body {
   font-size: 11px;
 }
 
-/* 使用内置简易牌面时的提示（鼠标悬停有说明） */
-.art-note {
-  font-size: 11px;
-  color: var(--accent);
-  opacity: 0.85;
-  cursor: help;
-}
-
 .shortcuts {
   font-size: 11px;
   color: var(--ink-soft);
@@ -220,12 +212,15 @@ body {
   cursor: pointer;
 }
 
-.pile[data-pile='joker'].is-available:hover {
-  --dy: -9px;
-}
+/* hover 位移只在鼠标设备上：触屏的 :hover 会粘住，可用提示由 panels.css 的 (hover: none) 常驻样式负责 */
+@media (hover: hover) {
+  .pile[data-pile='joker'].is-available:hover {
+    --dy: -9px;
+  }
 
-.pile[data-pile='joker'].is-available:hover .pile-bg {
-  opacity: 0.55;
+  .pile[data-pile='joker'].is-available:hover .pile-bg {
+    opacity: 0.55;
+  }
 }
 
 .pile[data-pile='joker']:not(.is-available) {
@@ -247,8 +242,11 @@ body {
   cursor: pointer;
 }
 
-.enemy.is-ready:hover {
-  transform: translateY(-3px);
+/* Boss 作为"确认键"的反馈：cursor 与描边留给所有设备，位移只在鼠标设备上（触屏 :hover 会粘住） */
+@media (hover: hover) {
+  .enemy.is-ready:hover {
+    transform: translateY(-3px);
+  }
 }
 
 .enemy.is-ready .enemy-slot::after {

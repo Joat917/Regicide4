@@ -103,9 +103,16 @@
   --radius-here: var(--boss-radius);
 }
 
-/* 悬停微抬（只在手牌区） */
-.hand .card-slot:hover .card:not(.is-selected) {
-  --lift: calc(var(--hand-h) * -0.05);
+/*
+ * 悬停微抬（只在手牌区）。
+ * 必须限定在**真的有鼠标**的设备上：触屏点一下会把 :hover "粘"在那个元素上
+ * （点别处才解除），于是"点一下选中、再点一下取消"之后牌会继续悬着 5%。
+ * 触屏的选中反馈靠下面的 .is-selected（上浮 + 描边），本来就够。
+ */
+@media (hover: hover) {
+  .hand .card-slot:hover .card:not(.is-selected) {
+    --lift: calc(var(--hand-h) * -0.05);
+  }
 }
 
 /*

@@ -94,14 +94,12 @@ async function boot() {
       return;
     }
   }
-  if (catalog.usesPlainArt) {
-    board.artNote.hidden = false;
-    board.artNote.textContent = '简易牌面';
-    board.artNote.title =
-      ART_PARAM === 'plain'
-        ? '用 ?art=plain 强制使用内置牌面；去掉这个参数即可加载 assets/ 里的美术'
-        : '没找到 assets/manifest.json，正在使用内置生成的牌面。补齐美术资源的几种方式见 web/ART.md';
-  }
+  // 美术来源只写进 Console：界面上一律不出现"用的是内置牌面"这类提示
+  // （想查"为什么牌面是简易的"看这里，顺带带上 ?art= 参数）
+  console.info(
+    `[regicide] 美术：${catalog.usesPlainArt ? '内置简易牌面' : 'assets/ 里的图片'}` +
+      (ART_PARAM ? `（?art=${ART_PARAM}）` : ''),
+  );
 
   const piles = {
     castle: createPileView(board.piles.castle),
@@ -171,15 +169,39 @@ async function boot() {
     const inDamage = state.phase === PHASE.DAMAGE && !state.outcome;
     const playReason = inDamage ? null : explainPlay(cards);
     const payment = inDamage && ids.length > 0 ? game.validatePayment(ids) : null;
+    // 弃牌阶段且实际攻击力为 0：一张都不弃也算合法支付（引擎里"弃 0 张 ≥ 0 点"成立），
+    // 所以"空选 + 点敌人"就是「跳过」；选了牌则是自愿弃牌。
+    // 王族被打死时不进弃牌阶段，因此不会误放行。
+    const canSkip = inDamage && state.damageOwed === 0 && ids.length === 0;
     const legal =
-      !state.outcome && ids.length > 0 && (inDamage ? Boolean(payment.ok) : playReason === null);
+      canSkip
+      || (!state.outcome && ids.length > 0 && (inDamage ? Boolean(payment.ok) : playReason === null));
 
     let message = hint;
     let messageTone = hint ? 'warn' : '';
     if (!message && !state.outcome) {
       if (inDamage) {
         const selected = cards.reduce((sum, card) => sum + card.value, 0);
-        if (ids.length === 0) {
+        if (state.damageOwed === 0) {
+          // 攻击力为 0 的弃牌阶段：弃牌纯自愿，空选点敌人就是跳过。
+          // "攻击力已经是 0""酒馆空没空"都直接画在屏幕上了（攻击徽章、牌堆徽章），不重复。
+          const leavesEmpty = state.hand.length - ids.length === 0 && state.jestersLeft === 0;
+          if (ids.length === 0) {
+            message = '选牌弃掉，点敌人跳过';
+            messageTone = 'info';
+          } else if (leavesEmpty) {
+            // 手牌清空且小丑用完 → 下一步直接判负。这条是屏幕上看不出来的，留着
+            message = '弃光会立刻失败';
+            messageTone = 'warn';
+          } else {
+            message = '点敌人弃掉这些牌';
+            messageTone = 'info';
+          }
+        } else if (state.handTotal < state.damageOwed) {
+          // 整手牌都挡不下：小丑能力是唯一的出路，直接指路，不解释原因
+          message = '挡不下——点小丑补牌';
+          messageTone = 'warn';
+        } else if (ids.length === 0) {
           message = `需要弃掉合计 ≥ ${state.damageOwed} 点的牌`;
           messageTone = 'info';
         } else if (selected < state.damageOwed) {
@@ -286,6 +308,11 @@ async function boot() {
       .map((uid) => state.hand.findIndex((card) => card.uid === uid))
       .filter((i) => i >= 0);
     if (ids.length === 0) {
+      // 攻击力为 0 的弃牌阶段：空选就是「跳过」，不需要先点牌
+      if (state.phase === PHASE.DAMAGE && state.damageOwed === 0) {
+        await perform(() => game.payDamage([]));
+        return;
+      }
       hint = '先点几张手牌';
       render();
       return;
@@ -304,7 +331,8 @@ async function boot() {
 
     const move = findMoveForCards(game.legalMoves(), ids);
     if (!move) {
-      hint = '这组牌不合法：同点数组合的总和不能超过 10，A 只能单独出或与 1 张牌搭配';
+      // 具体原因渲染时已经给过了（explainPlayText），这里只用与它一致的口径兜底
+      hint = '这组牌不能出';
       render();
       return;
     }

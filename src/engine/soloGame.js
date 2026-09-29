@@ -233,16 +233,14 @@ function playMove(game, move) {
   if (game.enemyHealth <= 0) {
     resolveDefeat(game, out);
   } else {
-    // 步骤 4：王族反击
+    // 步骤 4：王族反击。
+    // 攻击力被黑桃削到 0 时**照样进弃牌阶段**：此时可以自愿弃任意张牌（房规），
+    // 也可以一张不弃直接跳过（`payDamage([])` 就是合法的"弃 0 张"）。
+    // 这条只在王族**存活**时走到——王族被打死会进入 resolveDefeat，
+    // 直接翻下一个王族/结算胜利，永远不给弃牌机会。
     const owed = damageOwed(game);
     out.push(events.counterattack(owed, game.enemy));
-    if (owed > 0) {
-      game.phase = PHASE.DAMAGE;
-    } else {
-      // 黑桃已经把攻击削到 0：不需要弃牌，直接进入下一个回合
-      out.push(events.damagePaid([], 0));
-      game.phase = PHASE.PLAY;
-    }
+    game.phase = PHASE.DAMAGE;
   }
 
   checkForcedEnd(game, out);
@@ -359,11 +357,23 @@ function useJester(game) {
 
 // ---------------------------------------------------------------- 判负兜底
 
+/**
+ * 把"已经无法继续"的局面判负（而不是等玩家去试非法操作）。
+ *
+ * 注意：**还剩小丑能力就不算"无法继续"**。规则书允许在步骤 4
+ * 「承受伤害之前」发动小丑能力（rules/Regicide-规则详解.md 第 158 行），
+ * 所以手牌挡不下时也不能直接判负——两个分支都必须检查剩余次数，
+ * 真正的失败条件是「手牌为空且小丑能力用完」（同文档第 161 行）。
+ */
 function checkForcedEnd(game, out) {
   if (game.outcome) return;
   if (game.phase === PHASE.PLAY && game.hand.length === 0 && game.jestersLeft === 0) {
     lose(game, out);
-  } else if (game.phase === PHASE.DAMAGE && handTotal(game) < damageOwed(game)) {
+  } else if (
+    game.phase === PHASE.DAMAGE
+    && handTotal(game) < damageOwed(game)
+    && game.jestersLeft === 0
+  ) {
     lose(game, out);
   }
 }

@@ -5,6 +5,7 @@
  * 没有确认按钮：
  *   - **点敌人卡片** = 出牌 / 弃牌
  *   - **点小丑牌堆** = 使用小丑能力
+ *   - 攻击力被削到 0 的弃牌阶段里，**空选点敌人** = 跳过（一张都不弃）
  */
 
 export function bindPointer({ board, onCardClick, onConfirm, onJester, onSkip }) {

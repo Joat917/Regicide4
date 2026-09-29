@@ -28,11 +28,14 @@ export function describeEvent(ev) {
     case EVENT.NEW_ENEMY:
       return `新的敌人 ${cardText(ev.card)}，由你继续行动`;
     case EVENT.COUNTERATTACK:
-      return `${cardText(ev.card)} 反击：需要弃掉合计 ≥ ${ev.amount} 点`;
+      // 该做什么由提示行负责，这里只陈述事实
+      return ev.amount > 0
+        ? `${cardText(ev.card)} 反击：需要弃掉合计 ≥ ${ev.amount} 点`
+        : `${cardText(ev.card)} 反击：无需挡伤害`;
     case EVENT.DAMAGE_PAID:
       return ev.cards.length
         ? `弃掉 ${cardsText(ev.cards)}（${ev.amount} 点）挡下反击`
-        : '本次没有伤害需要承受';
+        : '未弃牌，直接跳过';
     case EVENT.JESTER_REFILL:
       return `小丑能力：弃掉 ${ev.cards.length} 张手牌，补抽 ${ev.amount} 张`;
     case EVENT.WIN:

@@ -126,9 +126,12 @@
   transition: transform var(--t-fast) ease, box-shadow var(--t-fast) ease, opacity var(--t-fast) ease;
 }
 
-.btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-card);
+/* 按钮的悬停位移同样只在鼠标设备上：触屏点完按钮会让它"粘"在抬起 1px 的状态 */
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-card);
+  }
 }
 
 .btn:active:not(:disabled) {
